@@ -5,8 +5,14 @@
 #include <cstring>
 #include <ctype.h>
 #include <vector>
-#include <strsafe.h>
+#include <algorithm>
 using namespace std;
+
+
+bool Word::operator== (const Word& wrd) const {
+	return !(strcmp(word, wrd.word));
+}
+
 
 Word::Word() {
 	word = nullptr;
@@ -26,16 +32,44 @@ void addw(Thesaurus& thes) {
 	printf("Which word would you like to add?\n>");
 	(void)scanf("%s", word);
 	word = (char*)realloc(word, sizeof(char) * (strlen(word) + 1));
+
+	if (word[0] > 'A' && word[0] < 'z') {
+		char* tm = (char*)malloc(sizeof(char));
+		strcpy(tm, "");
+		Word t = Word(word, tm);
+		auto it = find(thes.eng.begin(), thes.eng.end(), t);
+		if (it != thes.eng.end() && thes.eng.size() > 0) {
+			printf("\nThis word is already in Thesaurus. Use add_t function to add a translation.\n");
+			return;
+		}
+		free(tm);
+	}
+	else {
+		char* tm = (char*)malloc(sizeof(char));
+		strcpy(tm, "");
+		Word t = Word(word, tm);
+		auto it = find(thes.rus.begin(), thes.rus.end(), t);
+		if (it != thes.rus.end() && thes.rus.size() > 0) {
+			printf("\nThis word is already in Thesaurus. Use add_t function to add a translation.\n");
+			return;
+		}
+		free(tm);
+	}
+
 	printf("Add translation for %s: ", word);
 	(void)scanf("%s", tr);
 	tr = (char*)realloc(tr, sizeof(char) * (strlen(tr) + 1));
 	if (word[0] > 'A' && word[0] < 'z') {
 		Word word1 = Word(word, tr);
+		Word word2 = Word(tr, word);
 		thes.eng.push_back(word1);
+		thes.rus.push_back(word2);
 	}
 	else {
 		Word word1 = Word(word, tr);
+		Word word2 = Word(tr, word);
 		thes.rus.push_back(word1);
+		thes.eng.push_back(word2);
 	}
 	free(word);
 	free(tr);
@@ -133,7 +167,7 @@ void print_word(Word wrd) {
 }
 void cpf(Thesaurus thes) {
 	FILE* f;
-	char file_name[] = "C:\\Users\\User\\source\\repos\\Thesaurus\\Thesaurus\\ThesOut.txt";
+	char file_name[] = "ThesOut.txt";
 	if ((f = fopen(file_name, "w")) == NULL) printf("\nError opening file\n");
 	for (auto it = thes.eng.begin(); it != thes.eng.end(); ++it) {
 		fprint_word(*it, f);
@@ -175,11 +209,8 @@ void tr(Thesaurus& thes) {
 	free(word);
 }
 void addt(Thesaurus& thes) {
-	char* _lang = (char*)malloc(sizeof(char) * 256);
 	char* _word = (char*)malloc(sizeof(char) * 256);
 	char* _tr = (char*)malloc(sizeof(char) * 256);
-	printf("Which language is the original word?\n");
-	(void)scanf("%s", _lang);
 	printf("Which word would you like to add translation for?\n");
 	(void)scanf("%s", _word);
 	printf("Enter your translation: ");
@@ -188,6 +219,12 @@ void addt(Thesaurus& thes) {
 	if (_word[0] > 'A' && _word[0] < 'z') {
 		for (auto it = thes.eng.begin(); it != thes.eng.end(); ++it) {
 			if (strcmp((*it).word, _word) == 0) {
+				if (isSubInStr((*it).tr, _tr)) {
+					printf("\nThis translation is already there.\n");
+					return;
+				}
+				Word tmp = Word(_tr, (*it).word);
+				thes.rus.push_back(tmp);
 				(*it).tr = (char*)realloc((*it).tr, sizeof(char) * (strlen((*it).tr) + strlen(_tr) + 3));
 				(*it).tr = strcat((*it).tr, "; ");
 				(*it).tr = strcat((*it).tr, _tr);
@@ -197,10 +234,22 @@ void addt(Thesaurus& thes) {
 	else {
 		for (auto it = thes.rus.begin(); it != thes.rus.end(); ++it) {
 			if (strcmp((*it).word, _word) == 0) {
+				if (isSubInStr((*it).tr, _tr)) {
+					printf("\nThis translation is already there.\n");
+					return;
+				}
+				Word tmp = Word(_tr, (*it).word);
+				thes.eng.push_back(tmp);
 				(*it).tr = (char*)realloc((*it).tr, sizeof(char) * (strlen((*it).tr) + strlen(_tr) + 3));
 				(*it).tr = strcat((*it).tr, "; ");
 				(*it).tr = strcat((*it).tr, _tr);
 			}
 		}
 	}
+}
+bool isSubInStr(const char * str, const char * fnd) {
+	bool bExist = false;
+	if (str && fnd)
+		bExist = strstr(str, fnd) != 0;
+	return bExist;
 }

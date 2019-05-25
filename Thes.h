@@ -9,6 +9,7 @@ struct Word {
 	int num = 0;
 	Word();
 	Word(char*, char*);
+	bool operator== (const Word& word) const;
 
 };
 struct Thesaurus {
@@ -24,3 +25,4 @@ void print(Thesaurus&);
 void tr(Thesaurus&);
 void del(Thesaurus&);
 void read(Thesaurus&);
+bool isSubInStr(const char * str, const char * fnd);
